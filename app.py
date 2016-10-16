@@ -61,7 +61,7 @@ def post_to_discord(channel, text):
     print(text)
     d = post("https://discordapp.com/api/channels/{}/messages".format(channel),
              json={"content": text},
-             headers={"Authorization": config["token"],
+             headers={"Authorization": "Bot " + config["token"],
                       "User-Agent": "gitlab-discord-bridge by blha303"
                      }).json()
     print(d)
