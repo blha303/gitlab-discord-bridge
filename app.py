@@ -33,31 +33,35 @@ def handle_tag(body):
 def handle_issue(body):
     """ Handle GitLab issue event webhook
         https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#issues-events """
+    a = body["object_attributes"]["action"]
+    if a == "update":
+        return False
+    body.update({"action": (a + "d") if a[-1] == "e" else (a + "ed")})
     return """{project[web_url]}/issues/{object_attributes[id]}
-**{user[name]}** created an issue: {object_attributes[description]}"""
+**{user[name]}** {action} an issue: {object_attributes[title]}""".format(**body)
 
 def handle_note(body):
     """ Handle GitLab comment (note) event webhook
     https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#comment-events """
     def convert(type):
-        s1 = sub('(.)([A-Z][a-z]+)', r'\1 \2', name)
+        s1 = sub('(.)([A-Z][a-z]+)', r'\1 \2', type)
         return sub('([a-z0-9])([A-Z])', r'\1 \2', s1).lower()
     body.update({"type": convert(body["object_attributes"]["noteable_type"]) })
     return """{object_attributes[url]}
 **{user[name]}** commented on a {type}:
-{object_attributes[note]}"""
+{object_attributes[note]}""".format(**body)
 
 def handle_merge(body):
     """ Handle GitLab merge request event webhook
         https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#merge-request-events """
     return """{object_attributes[url]}
-**{user[name]}** created a merge request: {object_attributes[source_branch]}->{object_attributes[target_branch]} **{object_attributes[title]}**"""
+**{user[name]}** created a merge request: {object_attributes[source_branch]}->{object_attributes[target_branch]} **{object_attributes[title]}**""".format(**body)
 
 def handle_wiki(body):
     """ Handle GitLab wiki page event webhook
         https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#wiki-page-events """
     return """{object_attributes[url]}
-**{user[name]}** created a wiki page: {object_attributes[title]}"""
+**{user[name]}** created a wiki page: {object_attributes[title]}""".format(**body)
 
 def handle_pipeline(body):
     """ Handle GitLab pipeline event webhook
@@ -68,6 +72,8 @@ def handle_pipeline(body):
 
 def post_to_discord(channel, text):
     """ Posts to Discord like a boss """
+    if text is False:
+        return "cool"
     print(text)
     d = post("https://discordapp.com/api/channels/{}/messages".format(channel),
              json={"content": text},
