@@ -19,7 +19,7 @@ def handle_push(body):
                  "cmt_plural": "s" if tcc != 1 else "",
                  "commits": "\n".join(commitfmt.format(**c) for c in body["commits"])
                 })
-    return """:round_pushpin: {project[web_url]}/commits/{branch}
+    return """:round_pushpin: <{project[web_url]}/commits/{branch}>
 **{user_name}** pushed {number} commit{cmt_plural}:
 {commits}""".format(**body)
 
@@ -27,7 +27,7 @@ def handle_tag(body):
     """ Handle GitLab tag push event webhook
         https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#tag-events """
     body.update({"tag": body["ref"].split("/")[-1]})
-    return """:label: {project[web_url]}/tree/{tag}
+    return """:label: <{project[web_url]}/tree/{tag}>
 **{user_name}** pushed a tag: {tag}""".format(**body)
 
 def handle_issue(body):
@@ -37,7 +37,7 @@ def handle_issue(body):
     if a == "update":
         return False
     body.update({"action": (a + "d") if a[-1] == "e" else (a + "ed")})
-    return """:page_facing_up: {project[web_url]}/issues/{object_attributes[id]}
+    return """:page_facing_up: <{project[web_url]}/issues/{object_attributes[id]}>
 **{user[name]}** {action} an issue: {object_attributes[title]}""".format(**body)
 
 def handle_note(body):
@@ -47,20 +47,20 @@ def handle_note(body):
         s1 = sub('(.)([A-Z][a-z]+)', r'\1 \2', type)
         return sub('([a-z0-9])([A-Z])', r'\1 \2', s1).lower()
     body.update({"type": convert(body["object_attributes"]["noteable_type"]) })
-    return """:notepad_spiral: {object_attributes[url]}
+    return """:notepad_spiral: <{object_attributes[url]}>
 **{user[name]}** commented on a {type}:
 {object_attributes[note]}""".format(**body)
 
 def handle_merge(body):
     """ Handle GitLab merge request event webhook
         https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#merge-request-events """
-    return """:arrows_counterclockwise: {object_attributes[url]}
+    return """:arrows_counterclockwise: <{object_attributes[url]}>
 **{user[name]}** created a merge request: {object_attributes[source_branch]}->{object_attributes[target_branch]} **{object_attributes[title]}**""".format(**body)
 
 def handle_wiki(body):
     """ Handle GitLab wiki page event webhook
         https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#wiki-page-events """
-    return """:notebook: {object_attributes[url]}
+    return """:notebook: <{object_attributes[url]}>
 **{user[name]}** created a wiki page: {object_attributes[title]}""".format(**body)
 
 def handle_pipeline(body):
