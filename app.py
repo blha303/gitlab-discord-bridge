@@ -12,11 +12,14 @@ def handle_push(body):
     """ Handle GitLab push event webhook
         https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#push-events """
     tcc = body["total_commits_count"]
-    body.update({"number": tcc if tcc > 1 else "a",
-            "cmt_plural": "s" if tcc != 1 else "",
-            "commits": "\n".join("`{id:.7}` **{author[name]}**: {message}".format(**c) for c in body["commits"]) })
-    return """{project[web_url]}/compare/{before}...{after}
-{user_name} pushed {number} commit{cmt_plural}:
+    commitfmt = "`{id:.7}` **{author[name]}**: {message}"
+    body.update({"branch": body["ref"].split("/")[-1],
+                 "number": tcc if tcc > 1 else "a",
+                 "cmt_plural": "s" if tcc != 1 else "",
+                 "commits": "\n".join(commitfmt.format(**c) for c in body["commits"])
+                })
+    return """{project[web_url]}/commits/{branch}
+**{user_name}** pushed {number} commit{cmt_plural}:
 {commits}""".format(**body)
 
 def handle_tag(body):
