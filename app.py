@@ -2,6 +2,7 @@
 from flask import *
 from requests import post
 from json import load, dump
+from re import sub
 
 with open("config.json") as f:
     config = json.load(f)
@@ -25,39 +26,45 @@ def handle_push(body):
 def handle_tag(body):
     """ Handle GitLab tag push event webhook
         https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#tag-events """
-    pass
+    body.update({"tag": body["ref"].split("/")[-1]})
+    return """{project[web_url]}/tree/{tag}
+**{user_name}** pushed a tag: {tag}""".format(**body)
 
 def handle_issue(body):
     """ Handle GitLab issue event webhook
         https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#issues-events """
-    pass
+    return """{project[web_url]}/issues/{object_attributes[id]}
+**{user[name]}** created an issue: {object_attributes[description]}"""
 
 def handle_note(body):
     """ Handle GitLab comment (note) event webhook
     https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#comment-events """
-    type = body["object_attributes"]["noteable_type"]
-    if type == "Commit":
-        pass
-    elif type == "MergeRequest":
-        pass
-    elif type == "Issue":
-        pass
-    elif type == "Snippet":
-        pass
+    def convert(type):
+        s1 = sub('(.)([A-Z][a-z]+)', r'\1 \2', name)
+        return sub('([a-z0-9])([A-Z])', r'\1 \2', s1).lower()
+    body.update({"type": convert(body["object_attributes"]["noteable_type"]) })
+    return """{object_attributes[url]}
+**{user[name]}** commented on a {type}:
+{object_attributes[note]}"""
 
 def handle_merge(body):
     """ Handle GitLab merge request event webhook
         https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#merge-request-events """
-    pass
+    return """{object_attributes[url]}
+**{user[name]}** created a merge request: {object_attributes[source_branch]}->{object_attributes[target_branch]} **{object_attributes[title]}**"""
 
 def handle_wiki(body):
     """ Handle GitLab wiki page event webhook
         https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#wiki-page-events """
-    pass
+    return """{object_attributes[url]}
+**{user[name]}** created a wiki page: {object_attributes[title]}"""
 
 def handle_pipeline(body):
     """ Handle GitLab pipeline event webhook
         https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#pipeline-events """
+    # i don't even know what to put here
+    print(body)
+    return "Someone tried to do something with a pipeline :P"
 
 def post_to_discord(channel, text):
     """ Posts to Discord like a boss """
@@ -67,14 +74,13 @@ def post_to_discord(channel, text):
              headers={"Authorization": "Bot " + config["token"],
                       "User-Agent": "gitlab-discord-bridge by blha303"
                      }).json()
-    print(d)
     return "cool"
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method != "POST":
         return make_response("lol", 400)
-    if request.remote_addr != "103.245.212.8" or request.headers.get("X-Gitlab-Token", "") != config["secret"]:
+    if request.remote_addr != config["host"] or request.headers.get("X-Gitlab-Token", "") != config["secret"]:
         return make_response("go away please", 403)
     try:
         body = request.get_json()
@@ -94,4 +100,4 @@ def index():
     return make_response("wat", 400)
 
 if __name__ == "__main__":
-    app.run(debug=True, port=25431, host="0.0.0.0")
+    app.run(debug=False, port=25431, host="0.0.0.0")
