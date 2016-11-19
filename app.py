@@ -82,7 +82,7 @@ def post_to_discord(channel, text):
                      }).json()
     return "cool"
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/<channelid>', methods=['GET', 'POST'])
 def index():
     if request.method != "POST":
         return make_response("lol", 400)
@@ -102,7 +102,7 @@ def index():
                 "pipeline": handle_pipeline
                }
     if body["object_kind"] in handlers:
-        return make_response(post_to_discord(config["channel"], handlers[body["object_kind"]](body) ), 200)
+        return make_response(post_to_discord(channelid, handlers[body["object_kind"]](body) ), 200)
     return make_response("wat", 400)
 
 if __name__ == "__main__":
