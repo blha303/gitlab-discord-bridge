@@ -83,7 +83,7 @@ def post_to_discord(channel, text):
     return "cool"
 
 @app.route('/<channelid>', methods=['GET', 'POST'])
-def index():
+def index(channelid):
     if request.method != "POST":
         return make_response("lol", 400)
     if request.remote_addr != config["host"] or request.headers.get("X-Gitlab-Token", "") != config["secret"]:
