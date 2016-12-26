@@ -20,7 +20,7 @@ Tested on Ubuntu 16.10 and OS X El Capitan (with Homebrew)
   * "token" should be a bot login token acquired after creating an application at https://discordapp.com/developers/applications/ and giving it a bot user.
 4. Install the required libraries (Flask and requests): `sudo pip3 install -r requirements.txt`
 5. Run the application with `python3 app.py`.
-  * If you want to run it in the background with more worker threads, I use gunicorn: `gunicorn -w 4 -b 0.0.0.0:25431 app:app`
+  * If you want to run it in the background with more worker threads, I use gunicorn: `sudo pip3 install gunicorn` `gunicorn -w 4 -b 0.0.0.0:25431 app:app`
   * You may need to forward port 25431 (TCP) if the server is behind a router. If the bridge and Gitlab are on the same machine or LAN disregard this.
 6. In Gitlab, go into the desired repository's Webhooks settings and add "http://<ip>:25431/<discord channel ID>" as the webhook address. Set "Secret Token" to the same token as you set in config.json.
   * You can get the channel ID in the desktop client by opening User Settings > Appearance > Enable Developer Mode, then right clicking on the channel you want the bot to interact with and pressing "Copy ID". If using the browser client, the channel ID is the second string of numbers in the URL separated by forward slashes.
