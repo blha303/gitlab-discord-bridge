@@ -1,12 +1,12 @@
 gitlab-discord-bridge
 =====================
 
-A super simple GitLab>Discord bridge that I made because the only other option is a node.js thing, and nobody should be forced to use node.js.
+A super simple GitLab&gt;Discord bridge that I made because the only other option is a node.js thing, and nobody should be forced to use node.js.
 
 Usage
 -----
 
-After setup (see below), the webhook URL is "http://<ip>:25431/<discord channel id>" to support posting in any channel. The bot user will need to be added to the server by an administrator before attempting to post.
+After setup (see below), the webhook URL is "http://&lt;ip&gt;:25431/&lt;discord channel id&gt;" to support posting in any channel. The bot user will need to be added to the server by an administrator before attempting to post.
 
 Instructions
 ------------
@@ -22,8 +22,8 @@ Tested on Ubuntu 16.10 and OS X El Capitan (with Homebrew)
 5. Run the application with `python3 app.py`.
   * If you want to run it in the background with more worker threads, I use gunicorn: `sudo pip3 install gunicorn` `gunicorn -w 4 -b 0.0.0.0:25431 app:app`
   * You may need to forward port 25431 (TCP) if the server is behind a router. If the bridge and Gitlab are on the same machine or LAN disregard this.
-6. In Gitlab, go into the desired repository's Webhooks settings and add "http://<ip>:25431/<discord channel ID>" as the webhook address. Set "Secret Token" to the same token as you set in config.json.
-  * You can get the channel ID in the desktop client by opening User Settings > Appearance > Enable Developer Mode, then right clicking on the channel you want the bot to interact with and pressing "Copy ID". If using the browser client, the channel ID is the second string of numbers in the URL separated by forward slashes.
+6. In Gitlab, go into the desired repository's Webhooks settings and add "http://&lt;ip&gt;:25431/&lt;discord channel ID&gt;" as the webhook address. Set "Secret Token" to the same token as you set in config.json.
+  * You can get the channel ID in the desktop client by opening User Settings &gt; Appearance &gt; Enable Developer Mode, then right clicking on the channel you want the bot to interact with and pressing "Copy ID". If using the browser client, the channel ID is the second string of numbers in the URL separated by forward slashes.
   * The bridge can currently handle these event types: push, tag push, issue, note, merge request and wiki page. The author doesn't use pipelines but would like to add support for them to the bot; if you use pipelines, enable that checkbox in Webhook settings and, after triggering a pipeline event, send the author the log from the server. All responses are treated as confidential and will be used to add pipeline support to future releases.
 7. Test the webhook. You should see a message corresponding to the last event on the repository!
 
