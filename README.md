@@ -18,6 +18,7 @@ Tested on Ubuntu 16.10 and OS X El Capitan (with Homebrew)
 3. Rename config.example.json to config.json and edit the file.
   * "secret" should be an arbitrary secret token that you'll be giving to Gitlab to make sure incoming requests to this bridge aren't from an attacker.
   * "token" should be a bot login token acquired after creating an application at https://discordapp.com/developers/applications/ and giving it a bot user.
+  * Optionally, the "host" parameter can be used to specify the IP address of the Gitlab server sending the requests. If this is set, any requests from anywhere else will be ignored.
 4. Install the required libraries (Flask and requests): `sudo pip3 install -r requirements.txt`
 5. Run the application with `python3 app.py`.
   * If you want to run it in the background with more worker threads, I use gunicorn: `sudo pip3 install gunicorn` `gunicorn -w 4 -b 0.0.0.0:25431 app:app`
