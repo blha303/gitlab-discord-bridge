@@ -86,7 +86,7 @@ def post_to_discord(channel, text):
 def index(channelid):
     if request.method != "POST":
         return make_response("lol", 400)
-    if request.remote_addr != config["host"] or request.headers.get("X-Gitlab-Token", "") != config["secret"]:
+    if ("host" in config and request.remote_addr != config["host"]) or request.headers.get("X-Gitlab-Token", "") != config["secret"]:
         return make_response("go away please", 403)
     try:
         body = request.get_json()
