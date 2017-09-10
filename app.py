@@ -158,8 +158,12 @@ def index(channelid):
                 "pipeline": handle_pipeline,
                 "build": handle_build
                 }
-    if body["object_kind"] in handlers and ("enabled_hooks" in config and body["object_kind"] in config["enabled_hooks"]):
-        return make_response(post_to_discord(channelid, handlers[body["object_kind"]](body)), 200)
+    try:
+        if body["object_kind"] in handlers and body["object_kind"] in config["enabled_hooks"]:
+            return make_response(post_to_discord(channelid, handlers[body["object_kind"]](body)), 200)
+    except KeyError:
+        if body["object_kind"] in handlers and "enabled_hooks" not in config:
+            return make_response(post_to_discord(channelid, handlers[body["object_kind"]](body)), 200)
     if body["object_kind"] in handlers:
         return make_response("Handler not enabled", 417)
     return make_response("Not Implemented", 501)
