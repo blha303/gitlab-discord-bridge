@@ -140,14 +140,14 @@ def post_to_discord(channel, text):
 @app.route('/<channelid>', methods=['GET', 'POST'])
 def index(channelid):
     if request.method != "POST":
-        return make_response("lol", 400)
+        return make_response("Method Not Allowed", 405)
     if ("host" in config and request.remote_addr != config["host"]) or request.headers.get("X-Gitlab-Token", "") != \
             config["secret"]:
-        return make_response("go away please", 403)
+        return make_response("Not Authorized", 403)
     try:
         body = request.get_json()
     except BadRequest:
-        return make_response("lol", 400)
+        return make_response("Bad Request", 400)
 
     handlers = {"push": handle_push,
                 "tag_push": handle_tag,
@@ -160,8 +160,9 @@ def index(channelid):
                 }
     if body["object_kind"] in handlers and ("enabled_hooks" in config and body["object_kind"] in config["enabled_hooks"]):
         return make_response(post_to_discord(channelid, handlers[body["object_kind"]](body)), 200)
-    print(body)
-    return make_response("wat", 400)
+    if body["object_kind"] in handlers:
+        return make_response("Expectation Failed", 417)
+    return make_response("Not Implemented", 501)
 
 
 if __name__ == "__main__":
