@@ -100,7 +100,7 @@ def handle_pipeline(body):
         **body)
 
 
-def handle_job(body):
+def handle_build(body):
     """ Handle GitLab pipeline event webhook
         https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/user/project/integrations/webhooks.md#build-events """
     if body["build_status"] == "created":
@@ -149,7 +149,7 @@ def index(channelid):
                 "merge_request": handle_merge,
                 "wiki_page": handle_wiki,
                 "pipeline": handle_pipeline,
-                "build": handle_job
+                "build": handle_build
                 }
     if body["object_kind"] in handlers:
         return make_response(post_to_discord(channelid, handlers[body["object_kind"]](body)), 200)
