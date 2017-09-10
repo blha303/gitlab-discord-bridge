@@ -3,8 +3,16 @@ from flask import *
 from requests import post
 from json import load, dump
 from re import sub
+import argparse
 
-with open("config.json") as f:
+parser = argparse.ArgumentParser(description='Gitlab Discord Bridge')
+
+parser.add_argument('-c', '--config',type=str, help="Configuration file", default="config.json")
+
+args = parser.parse_args()
+
+print(args.config)
+with open(args.config) as f:
     config = json.load(f)
 
 assert "secret" in config, "Gitlab secret token in config not defined"
