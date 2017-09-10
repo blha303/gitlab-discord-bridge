@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from flask import *
 from requests import post
-from json import load, dump
 from re import sub
 
 with open("config.json") as f:
