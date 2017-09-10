@@ -89,7 +89,7 @@ def handle_job(body):
                 Job **{build_name}** **{build_status}**""".format(**body)
     if body["build_status"] == "success":
         body.update({"build_status": "finished"})
-        return """:robot: <{repository[homepage]}/-/jobs/{build_id}>
+        return """:ok_hand: <{repository[homepage]}/-/jobs/{build_id}>
                 Job **{build_name}** **{build_status}** after **{build_duration:.0f}** seconds""".format(**body)
     return """:poop: <{repository[homepage]}/-/jobs/{build_id}>
             Job **{build_name}** **{build_status}** after **{build_duration:.0f}** seconds""".format(**body)
