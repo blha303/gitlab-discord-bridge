@@ -85,13 +85,13 @@ def handle_job(body):
         return False
     if body["build_status"] == "running":
         body.update({"build_status": "started"})
-        return """:computer: <{repository[homepage]}/-/jobs/{build_id}>
+        return """:robot: <{repository[homepage]}/-/jobs/{build_id}>
                 Job **{build_name}** **{build_status}**""".format(**body)
     if body["build_status"] == "success":
         body.update({"build_status": "finished"})
-        return """:computer: <{repository[homepage]}/-/jobs/{build_id}>
+        return """:robot: <{repository[homepage]}/-/jobs/{build_id}>
                 Job **{build_name}** **{build_status}** after **{build_duration:.0f}** seconds""".format(**body)
-    return """:computer: <{repository[homepage]}/-/jobs/{build_id}>
+    return """:poop: <{repository[homepage]}/-/jobs/{build_id}>
             Job **{build_name}** **{build_status}** after **{build_duration:.0f}** seconds""".format(**body)
 
 
