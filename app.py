@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from flask import *
 from requests import post
+from json import load, dump
 from re import sub
 
 with open("config.json") as f:
@@ -45,7 +46,7 @@ def handle_issue(body):
     try:
         a = body["object_attributes"]["action"]
     except KeyError:
-        a = "Touch"
+        return False
     if a == "update":
         return False
     body.update({"action": (a + "d") if a[-1] == "e" else (a + "ed")})
@@ -76,21 +77,19 @@ def handle_merge(body):
         url = body["project"]["web_url"] + "/merge_requests"
     body["object_attributes"]["url"] = url
     return """:arrows_counterclockwise: <{object_attributes[url]}>
-**{user[name]}** created a merge request: {object_attributes[source_branch]}->{object_attributes[target_branch]} **{object_attributes[title]}**""".format(
-        **body)
+            **{user[name]}** created a merge request: {object_attributes[source_branch]}->{object_attributes[target_branch]} **{object_attributes[title]}**""".format(**body)
 
 
 def handle_wiki(body):
     """ Handle GitLab wiki page event webhook
         https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/user/project/integrations/webhooks.md#wiki-page-events """
     return """:notebook: <{object_attributes[url]}>
-**{user[name]}** created a wiki page: {object_attributes[title]}""".format(**body)
+            **{user[name]}** created a wiki page: {object_attributes[title]}""".format(**body)
 
 
 def handle_pipeline(body):
     """ Handle GitLab pipeline event webhook
         https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/user/project/integrations/webhooks.md#pipeline-events """
-    # i don't even know what to put here
     if body["object_attributes"]["status"] == "pending":
         return """:bathtub: {project[web_url]}/pipelines/{object_attributes[id]}
                 **{object_attributes[ref]}**: Pipeline created by **{user[name]}**""".format(**body)
@@ -140,8 +139,7 @@ def post_to_discord(channel, text):
 def index(channelid):
     if request.method != "POST":
         return make_response("Method Not Allowed", 405)
-    if ("host" in config and request.remote_addr != config["host"]) or request.headers.get("X-Gitlab-Token", "") != \
-            config["secret"]:
+    if ("host" in config and request.remote_addr != config["host"]) or request.headers.get("X-Gitlab-Token", "") != config["secret"]:
         return make_response("Not Authorized", 403)
     try:
         body = request.get_json()
@@ -157,12 +155,10 @@ def index(channelid):
                 "pipeline": handle_pipeline,
                 "build": handle_build
                 }
-    try:
-        if body["object_kind"] in handlers and body["object_kind"] in config["enabled_hooks"]:
-            return make_response(post_to_discord(channelid, handlers[body["object_kind"]](body)), 200)
-    except KeyError:
-        if body["object_kind"] in handlers and "enabled_hooks" not in config:
-            return make_response(post_to_discord(channelid, handlers[body["object_kind"]](body)), 200)
+
+    if body["object_kind"] in handlers:
+        return make_response(post_to_discord(channelid, handlers[body["object_kind"]](body)), 200)
+
     if body["object_kind"] in handlers:
         return make_response("Handler not enabled", 417)
     return make_response("Not Implemented", 501)
