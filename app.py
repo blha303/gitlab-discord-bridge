@@ -33,7 +33,6 @@ def handle_tag(body):
 def handle_issue(body):
     """ Handle GitLab issue event webhook
         https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/user/project/integrations/webhooks.md#issues-events """
-    print(body)
     try:
         a = body["object_attributes"]["action"]
     except KeyError:
