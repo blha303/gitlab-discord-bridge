@@ -53,7 +53,12 @@ def handle_note(body):
 
 def handle_merge(body):
     """ Handle GitLab merge request event webhook
-        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#merge-request-events """
+        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/user/project/integrations/webhooks.md#push-events """
+    try:
+        url=body["object_attributes"]["url"]
+    except KeyError:
+        url=body["project"]["web_url"] + "/merge_requests"
+    body["object_attributes"]["url"]=url
     return """:arrows_counterclockwise: <{object_attributes[url]}>
 **{user[name]}** created a merge request: {object_attributes[source_branch]}->{object_attributes[target_branch]} **{object_attributes[title]}**""".format(**body)
 
