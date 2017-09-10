@@ -4,6 +4,7 @@ from requests import post
 from json import load, dump
 from re import sub
 import argparse
+import os.path
 
 parser = argparse.ArgumentParser(description='Gitlab Discord Bridge')
 
@@ -11,7 +12,8 @@ parser.add_argument('-c', '--config',type=str, help="Configuration file", defaul
 
 args = parser.parse_args()
 
-print(args.config)
+assert os.path.isfile(args.config), "Config file " + args.config + " does not exist, please create it."
+
 with open(args.config) as f:
     config = json.load(f)
 
