@@ -78,6 +78,23 @@ def handle_pipeline(body):
     print(body)
     return ":bathtub: Someone tried to do something with a pipeline :P"
 
+def handle_job(body):
+    """ Handle GitLab pipeline event webhook
+        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/user/project/integrations/webhooks.md#build-events """
+    if body["build_status"] == "created":
+        return False
+    if body["build_status"] == "running":
+        body.update({"build_status": "started"})
+        return """:computer: <{repository[homepage]}/-/jobs/{build_id}>
+                Job **{build_name}** **{build_status}**""".format(**body)
+    if body["build_status"] == "success":
+        body.update({"build_status": "finished"})
+        return """:computer: <{repository[homepage]}/-/jobs/{build_id}>
+                Job **{build_name}** **{build_status}** after **{build_duration:.0f}** seconds""".format(**body)
+    return """:computer: <{repository[homepage]}/-/jobs/{build_id}>
+            Job **{build_name}** **{build_status}** after **{build_duration:.0f}** seconds""".format(**body)
+
+
 def post_to_discord(channel, text):
     """ Posts to Discord like a boss """
     if text is False:
@@ -107,10 +124,12 @@ def index(channelid):
                 "note": handle_note,
                 "merge_request": handle_merge,
                 "wiki_page": handle_wiki,
-                "pipeline": handle_pipeline
+                "pipeline": handle_pipeline,
+                "build": handle_job
                }
     if body["object_kind"] in handlers:
         return make_response(post_to_discord(channelid, handlers[body["object_kind"]](body) ), 200)
+    print(body)
     return make_response("wat", 400)
 
 if __name__ == "__main__":
