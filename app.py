@@ -19,7 +19,7 @@ app = Flask(__name__)
 
 def handle_push(body):
     """ Handle GitLab push event webhook
-        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#push-events """
+        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/user/project/integrations/webhooks.md#push-events """
     tcc = body["total_commits_count"]
     commitfmt = "`{id:.7}` **{author[name]}**: {message}"
     body.update({"branch": body["ref"].split("/")[-1],
@@ -34,7 +34,7 @@ def handle_push(body):
 
 def handle_tag(body):
     """ Handle GitLab tag push event webhook
-        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#tag-events """
+        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/user/project/integrations/webhooks.md#tag-events """
     body.update({"tag": body["ref"].split("/")[-1]})
     return """:label: <{project[web_url]}/tree/{tag}>
 **{user_name}** pushed a tag: {tag}""".format(**body)
@@ -56,7 +56,7 @@ def handle_issue(body):
 
 def handle_note(body):
     """ Handle GitLab comment (note) event webhook
-    https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#comment-events """
+    https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/user/project/integrations/webhooks.md#comment-events """
 
     def convert(type):
         s1 = sub('(.)([A-Z][a-z]+)', r'\1 \2', type)
@@ -70,7 +70,7 @@ def handle_note(body):
 
 def handle_merge(body):
     """ Handle GitLab merge request event webhook
-        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/user/project/integrations/webhooks.md#push-events """
+        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/user/project/integrations/webhooks.md#merge-request-events """
     try:
         url = body["object_attributes"]["url"]
     except KeyError:
@@ -83,14 +83,14 @@ def handle_merge(body):
 
 def handle_wiki(body):
     """ Handle GitLab wiki page event webhook
-        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#wiki-page-events """
+        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/user/project/integrations/webhooks.md#wiki-page-events """
     return """:notebook: <{object_attributes[url]}>
 **{user[name]}** created a wiki page: {object_attributes[title]}""".format(**body)
 
 
 def handle_pipeline(body):
     """ Handle GitLab pipeline event webhook
-        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#pipeline-events """
+        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/user/project/integrations/webhooks.md#pipeline-events """
     # i don't even know what to put here
     if body["object_attributes"]["status"] == "pending":
         return """:bathtub: {project[web_url]}/pipelines/{object_attributes[id]}
