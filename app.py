@@ -75,8 +75,17 @@ def handle_pipeline(body):
     """ Handle GitLab pipeline event webhook
         https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#pipeline-events """
     # i don't even know what to put here
-    print(body)
-    return ":bathtub: Someone tried to do something with a pipeline :P"
+    if body["object_attributes"]["status"] == "pending":
+        return """:bathtub: {project[web_url]}/pipelines/{object_attributes[id]}
+                **{object_attributes[ref]}**: Pipeline created by **{user[name]}**""".format(**body)
+    if body["object_attributes"]["status"] == "success":
+        return """:bathtub: {project[web_url]}/pipelines/{object_attributes[id]}
+                **{object_attributes[ref]}**: Pipeline finished after **{object_attributes[duration]:.0f}** seconds""".format(**body)
+    if body["object_attributes"]["status"] == "running":
+        return """:bathtub: {project[web_url]}/pipelines/{object_attributes[id]}
+                **{object_attributes[ref]}**: Pipeline started""".format(**body)
+    return """:bathtub: {project[web_url]}/pipelines/{object_attributes[id]}
+            **{object_attributes[ref]}**: Pipeline {object_attributes[status]} after **{object_attributes[duration]:.0f}** seconds""".format(**body)
 
 def handle_job(body):
     """ Handle GitLab pipeline event webhook
