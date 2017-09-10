@@ -1,1 +1,16 @@
-{"secret": "secret token", "token": "bot login token"}
+{
+  "secret": "secret token",
+  "token": "bot login token",
+  "listen": "0.0.0.0",
+  "port": 25431
+  "enabled_hooks": [
+    "push",
+    "tag_push",
+    "issue",
+    "note",
+    "merge_request",
+    "wiki_page",
+    "pipeline",
+    "build"
+  ]
+}

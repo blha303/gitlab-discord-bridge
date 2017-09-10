@@ -7,6 +7,13 @@ from re import sub
 with open("config.json") as f:
     config = json.load(f)
 
+assert "secret" in config, "Gitlab secret token in config not defined"
+assert "token" in config, "Discord token in config not defined"
+
+if "listen" not in config:
+    config["listen"] = "0.0.0.0"
+if "port" not in config:
+    config["port"] = 25431
 app = Flask(__name__)
 
 
@@ -151,11 +158,11 @@ def index(channelid):
                 "pipeline": handle_pipeline,
                 "build": handle_build
                 }
-    if body["object_kind"] in handlers:
+    if body["object_kind"] in handlers and ("enabled_hooks" in config and body["object_kind"] in config["enabled_hooks"]):
         return make_response(post_to_discord(channelid, handlers[body["object_kind"]](body)), 200)
     print(body)
     return make_response("wat", 400)
 
 
 if __name__ == "__main__":
-    app.run(debug=False, port=25431, host="0.0.0.0")
+    app.run(debug=False, port=config['port'], host=config['listen'])
