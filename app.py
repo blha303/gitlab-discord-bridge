@@ -137,7 +137,7 @@ def post_to_discord(channel, text):
     return "cool"
 
 
-@app.route('/<channelid>', methods=['GET', 'POST'])
+@app.route('/<channelid>', methods=['POST'])
 def index(channelid):
     if request.method != "POST":
         return make_response("Method Not Allowed", 405)
@@ -161,7 +161,7 @@ def index(channelid):
     if body["object_kind"] in handlers and ("enabled_hooks" in config and body["object_kind"] in config["enabled_hooks"]):
         return make_response(post_to_discord(channelid, handlers[body["object_kind"]](body)), 200)
     if body["object_kind"] in handlers:
-        return make_response("Expectation Failed", 417)
+        return make_response("Handler not enabled", 417)
     return make_response("Not Implemented", 501)
 
 
