@@ -4,14 +4,11 @@ from requests import post
 from json import load, dump
 from re import sub
 
-with open("config.json") as f:
-    config = json.load(f)
-
 app = Flask(__name__)
 
 def handle_push(body):
     """ Handle GitLab push event webhook
-        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#push-events """
+        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/user/project/integrations/webhooks.md#push-events """
     tcc = body["total_commits_count"]
     commitfmt = "`{id:.7}` **{author[name]}**: {message}"
     body.update({"branch": body["ref"].split("/")[-1],
@@ -25,15 +22,18 @@ def handle_push(body):
 
 def handle_tag(body):
     """ Handle GitLab tag push event webhook
-        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#tag-events """
+        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/user/project/integrations/webhooks.md#tag-events """
     body.update({"tag": body["ref"].split("/")[-1]})
     return """:label: <{project[web_url]}/tree/{tag}>
 **{user_name}** pushed a tag: {tag}""".format(**body)
 
 def handle_issue(body):
     """ Handle GitLab issue event webhook
-        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#issues-events """
-    a = body["object_attributes"]["action"]
+        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/user/project/integrations/webhooks.md#issues-events """
+    try:
+        a = body["object_attributes"]["action"]
+    except KeyError:
+        return False
     if a == "update":
         return False
     body.update({"action": (a + "d") if a[-1] == "e" else (a + "ed")})
@@ -42,7 +42,7 @@ def handle_issue(body):
 
 def handle_note(body):
     """ Handle GitLab comment (note) event webhook
-    https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#comment-events """
+    https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/user/project/integrations/webhooks.md#comment-events """
     def convert(type):
         s1 = sub('(.)([A-Z][a-z]+)', r'\1 \2', type)
         return sub('([a-z0-9])([A-Z])', r'\1 \2', s1).lower()
@@ -53,22 +53,49 @@ def handle_note(body):
 
 def handle_merge(body):
     """ Handle GitLab merge request event webhook
-        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#merge-request-events """
+        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/user/project/integrations/webhooks.md#merge-request-events """
+    if not "url" in body["object_attributes"]:
+        body["object_attributes"]["url"] = body["project"]["web_url"] + "/merge_requests"
     return """:arrows_counterclockwise: <{object_attributes[url]}>
 **{user[name]}** created a merge request: {object_attributes[source_branch]}->{object_attributes[target_branch]} **{object_attributes[title]}**""".format(**body)
 
 def handle_wiki(body):
     """ Handle GitLab wiki page event webhook
-        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#wiki-page-events """
+        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/user/project/integrations/webhooks.md#wiki-page-events """
     return """:notebook: <{object_attributes[url]}>
 **{user[name]}** created a wiki page: {object_attributes[title]}""".format(**body)
 
 def handle_pipeline(body):
     """ Handle GitLab pipeline event webhook
-        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md#pipeline-events """
-    # i don't even know what to put here
-    print(body)
-    return ":bathtub: Someone tried to do something with a pipeline :P"
+        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/user/project/integrations/webhooks.md#pipeline-events """
+    if body["object_attributes"]["status"] == "pending":
+        return """:bathtub: {project[web_url]}/pipelines/{object_attributes[id]}
+                **{object_attributes[ref]}**: Pipeline created by **{user[name]}**""".format(**body)
+    if body["object_attributes"]["status"] == "success":
+        return """:bathtub: {project[web_url]}/pipelines/{object_attributes[id]}
+                **{object_attributes[ref]}**: Pipeline finished after **{object_attributes[duration]:.0f}** seconds""".format(**body)
+    if body["object_attributes"]["status"] == "running":
+        return """:bathtub: {project[web_url]}/pipelines/{object_attributes[id]}
+                **{object_attributes[ref]}**: Pipeline started""".format(**body)
+    return """:bathtub: {project[web_url]}/pipelines/{object_attributes[id]}
+            **{object_attributes[ref]}**: Pipeline {object_attributes[status]} after **{object_attributes[duration]:.0f}** seconds""".format(**body)
+
+
+def handle_build(body):
+    """ Handle GitLab pipeline event webhook
+        https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/user/project/integrations/webhooks.md#build-events """
+    if body["build_status"] == "created":
+        return False
+    if body["build_status"] == "running":
+        body.update({"build_status": "started"})
+        return """:robot: <{repository[homepage]}/-/jobs/{build_id}>
+                Job **{build_name}** **{build_status}**""".format(**body)
+    if body["build_status"] == "success":
+        body.update({"build_status": "finished"})
+        return """:ok_hand: <{repository[homepage]}/-/jobs/{build_id}>
+                Job **{build_name}** **{build_status}** after **{build_duration:.0f}** seconds""".format(**body)
+    return """:poop: <{repository[homepage]}/-/jobs/{build_id}>
+            Job **{build_name}** **{build_status}** after **{build_duration:.0f}** seconds""".format(**body)
 
 def post_to_discord(channel, text):
     """ Posts to Discord like a boss """
@@ -85,13 +112,13 @@ def post_to_discord(channel, text):
 @app.route('/<channelid>', methods=['GET', 'POST'])
 def index(channelid):
     if request.method != "POST":
-        return make_response("lol", 400)
+        return make_response("Method Not Allowed", 405)
     if ("host" in config and request.remote_addr != config["host"]) or request.headers.get("X-Gitlab-Token", "") != config["secret"]:
-        return make_response("go away please", 403)
+        return make_response("Not Authorized", 403)
     try:
         body = request.get_json()
     except BadRequest:
-        return make_response("lol", 400)
+        return make_response("Bad Request", 400)
 
     handlers = {"push": handle_push,
                 "tag_push": handle_tag,
@@ -99,11 +126,22 @@ def index(channelid):
                 "note": handle_note,
                 "merge_request": handle_merge,
                 "wiki_page": handle_wiki,
-                "pipeline": handle_pipeline
+                "pipeline": handle_pipeline,
+                "build": handle_build
                }
     if body["object_kind"] in handlers:
         return make_response(post_to_discord(channelid, handlers[body["object_kind"]](body) ), 200)
-    return make_response("wat", 400)
+    return make_response("Not Implemented", 501)
 
 if __name__ == "__main__":
-    app.run(debug=False, port=25431, host="0.0.0.0")
+    from argparse import ArgumentParser
+    import os.path
+    parser = ArgumentParser(description="Gitlab Discord Bridge")
+    parser.add_argument("-c", "--config", help="Configuration file", default="config.json")
+    args = parser.parse_args()
+    assert os.path.isfile(args.config), "Config file " + args.config + " does not exist, please create it."
+    with open(args.config) as f:
+        config = json.load(f)
+    assert "secret" in config, "Gitlab secret token in config not defined"
+    assert "token" in config, "Discord token in config not defined"
+    app.run(debug=False, port=config.get("port", 25431), host=config.get("listen", "0.0.0.0"))
