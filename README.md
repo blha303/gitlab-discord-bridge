@@ -15,11 +15,11 @@ Tested on Ubuntu 16.10 and OS X El Capitan (with Homebrew)
 
 1. Install Python 3.5/3.6 (and Pip if not installed automatically): https://www.python.org/downloads/ or `brew install python3`
 2. Clone or download the repository using the green button above.
-3. Rename config.example.json to config.json and edit the file.
+3. Run the script once to generate the config file. This will be saved at `~/.config/gitlab_discord_bridge.json` on linux, `~/Library/Preferences/gitlab_discord_bridge.json` on mac, `AppData\Local\gitlab_discord_bridge.json` on Windows
   * "secret" should be an arbitrary secret token that you'll be giving to Gitlab to make sure incoming requests to this bridge aren't from an attacker.
   * "token" should be a bot login token acquired after creating an application at https://discordapp.com/developers/applications/ and giving it a bot user.
-  * Optionally, the "host" parameter can be used to specify the IP address of the Gitlab server sending the requests. If this is set, any requests from anywhere else will be ignored.
-4. Install the required libraries (Flask and requests): `sudo pip3 install -r requirements.txt`
+  * If running the application directly instead of via gunicorn, the host and port parameters can be set. These will be ignored if running in wsgi.
+4. Install the required libraries: `sudo pip3 install -r requirements.txt` **appdirs now required**
 5. Run the application with `python3 app.py`.
   * If you want to run it in the background with more worker threads, I use gunicorn: `sudo pip3 install gunicorn` `gunicorn -w 4 -b 0.0.0.0:25431 app:app`
   * You may need to forward port 25431 (TCP) if the server is behind a router. If the bridge and Gitlab are on the same machine or LAN disregard this.

@@ -3,6 +3,25 @@ from flask import *
 from requests import post
 from json import load, dump
 from re import sub
+from appdirs import user_config_dir
+from os.path import join
+from sys import exit
+
+config = {"secret": "gitlab secret token", "token": "bot login token", "port": 25431, "listen": "0.0.0.0"}
+config_path = join(user_config_dir(), "gitlab_discord_bridge.json")
+
+try:
+    with open(config_path) as f:
+        config = json.load(f)
+        if config["token"] == "bot login token":
+            print("Please update {} with discord bot token".format(config_path))
+            exit(2)
+except:
+    with open(config_path, "w") as f:
+        json.dump(config, f)
+        print("Please update {} with discord bot token".format(config_path))
+        exit(2)
+
 
 app = Flask(__name__)
 
@@ -134,14 +153,4 @@ def index(channelid):
     return make_response("Not Implemented", 501)
 
 if __name__ == "__main__":
-    from argparse import ArgumentParser
-    import os.path
-    parser = ArgumentParser(description="Gitlab Discord Bridge")
-    parser.add_argument("-c", "--config", help="Configuration file", default="config.json")
-    args = parser.parse_args()
-    assert os.path.isfile(args.config), "Config file " + args.config + " does not exist, please create it."
-    with open(args.config) as f:
-        config = json.load(f)
-    assert "secret" in config, "Gitlab secret token in config not defined"
-    assert "token" in config, "Discord token in config not defined"
     app.run(debug=False, port=config.get("port", 25431), host=config.get("listen", "0.0.0.0"))
