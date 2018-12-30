@@ -76,7 +76,7 @@ def handle_merge(body):
     if not "url" in body["object_attributes"]:
         body["object_attributes"]["url"] = body["project"]["web_url"] + "/merge_requests"
     return """:arrows_counterclockwise: <{object_attributes[url]}>
-**{user[name]}** created a merge request: {object_attributes[source_branch]}->{object_attributes[target_branch]} **{object_attributes[title]}**""".format(**body)
+**{user[name]}** {object_attributes[state]} a merge request: {object_attributes[source_branch]}->{object_attributes[target_branch]} **{object_attributes[title]}**""".format(**body)
 
 def handle_wiki(body):
     """ Handle GitLab wiki page event webhook
